@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  hash        String
+  name        String
+  email       String   @unique
+  phoneNumber String
+  role        Role     @default(NORMAL)
+  Order       Order[]
+
+  @@map("users")
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  name      String    @unique
+  products  Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  name        String
+  description String?
+  price       Float
+  weight      Float?
+  categoryId  Int
+  category    Category    @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+
+  @@map("products")
+}
+
+model OrderStatus {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  status    Status   @unique @default(NOT_CONFIRMED)
+  orders    Order[]
+
+  @@map("order_statuses")
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  price     Float
+  quantity  Int
+
+  @@map("order_items")
+}
+
+model Order {
+  id               Int         @id @default(autoincrement())
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  confirmationDate DateTime?
+  userId           Int
+  user             User        @relation(fields: [userId], references: [id])
+  orderStatusId    Int
+  orderStatus      OrderStatus @relation(fields: [orderStatusId], references: [id])
+  orderItems       OrderItem[]
+
+  @@map("orders")
+}
+
+enum Status {
+  NOT_CONFIRMED
+  CONFIRMED
+  CANCELED
+  COMPLETED
+}
+
+enum Role {
+  ADMIN
+  NORMAL
+}
